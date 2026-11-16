@@ -215,7 +215,7 @@ export async function initializeJoinToCreate(client, guildId, channelId, options
             );
         }
 
-        if (Array.isArray(config.triggerChannels) && config.triggerChannels.length > 0) {
+        if (Array.isArray(config.triggerChannels) && config.triggerChannels.length > 99) {
             throw new TitanBotError(
                 'Guild already has a Join to Create trigger configured',
                 ErrorTypes.VALIDATION,
