@@ -34,6 +34,14 @@ for (const size of SIZES) {
     );
 }
 
+builder.addChannelOption((option) =>
+    option
+        .setName("category")
+        .setDescription("Category where the temporary rooms will be created (optional).")
+        .setRequired(false)
+        .addChannelTypes(ChannelType.GuildCategory)
+);
+
 export default {
     data: builder,
     category: "utility",
@@ -51,6 +59,7 @@ export default {
             await InteractionHelper.safeDefer(interaction, { flags: 64 });
 
             const guildId = interaction.guild.id;
+            const category = interaction.options.getChannel('category');
             const current = await getConfiguration(client, guildId);
             const existing = Array.isArray(current.triggerChannels) ? current.triggerChannels : [];
             const results = [];
@@ -61,7 +70,7 @@ export default {
                     nameTemplate: size.template,
                     userLimit: size.limit,
                     bitrate: channel.bitrate || 64000,
-                    categoryId: channel.parentId || null
+                    categoryId: category?.id || channel.parentId || null
                 };
 
                 if (existing.includes(channel.id)) {
@@ -78,12 +87,17 @@ export default {
                 results.push(`${channel} → rooms for ${size.limit}`);
             }
 
+            const categoryLine = category
+                ? `\n\nRooms will be created in: **${category.name}**`
+                : `\n\nRooms will be created in the same category as each channel.`;
+
             await logConfigurationChange(client, guildId, interaction.user.id, 'Linked Solo/Duo/Trio/Squad channels', {
-                channels: SIZES.map((s) => interaction.options.getChannel(s.option).id)
+                channels: SIZES.map((s) => interaction.options.getChannel(s.option).id),
+                categoryId: category?.id || null
             });
 
             return await InteractionHelper.safeEditReply(interaction, {
-                embeds: [successEmbed('✅ Channels Linked', results.join('\n'))]
+                embeds: [successEmbed('✅ Channels Linked', results.join('\n') + categoryLine)]
             });
 
         } catch (error) {
